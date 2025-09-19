@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRANSTAR-NAGEL Обработка документов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .upload-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-zone {
+            border: 3px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .upload-zone.dragover {
+            border-color: #667eea;
+            background: #eef2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-zone.has-files {
+            border-color: #48bb78;
+            background: #f0fdf4;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .upload-zone h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.25rem;
+        }
+
+        .upload-zone p {
+            color: #718096;
+            font-size: 0.95rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .file-item {
+            background: #f7fafc;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-item .name {
+            color: #2d3748;
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .file-item .remove {
+            color: #e53e3e;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .progress-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-message {
+            color: #4a5568;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .results-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .history-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .history-title {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .history-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-name {
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .history-meta {
+            color: #718096;
+            font-size: 0.85rem;
+        }
+
+        .download-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .download-btn:hover {
+            background: #5a67d8;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #276749;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚚 TRANSTAR-NAGEL</h1>
+            <p>Система обработки транспортных документов</p>
+        </div>
+
+        <div class="main-card">
+            <div class="upload-section">
+                <div class="upload-zone" id="orders-zone">
+                    <input type="file" id="orders-input" class="file-input" multiple accept=".pdf">
+                    <div class="upload-icon">📄</div>
+                    <h3>Транспортные заказы</h3>
+                    <p>Перетащите PDF файлы или нажмите для выбора</p>
+                    <div class="file-list" id="orders-list"></div>
+                </div>
+
+                <div class="upload-zone" id="gutschrifts-zone">
+                    <input type="file" id="gutschrifts-input" class="file-input" multiple accept=".pdf">
+                    <div class="upload-icon">💵</div>
+                    <h3>Гутшрифты</h3>
+                    <p>Перетащите PDF файлы или нажмите для выбора</p>
+                    <div class="file-list" id="gutschrifts-list"></div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-secondary" onclick="clearFiles()">Очистить</button>
+                <button class="btn btn-primary" id="process-btn" onclick="processFiles()" disabled>Обработать документы</button>
+            </div>
+
+            <div class="progress-section" id="progress-section">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-message" id="progress-message">Подготовка к обработке...</div>
+            </div>
+
+            <div class="error-message" id="error-message"></div>
+            <div class="success-message" id="success-message"></div>
+
+            <div class="results-section" id="results-section">
+                <h3 style="color: #2d3748; margin-bottom: 20px;">📊 Результаты обработки</h3>
+                <div class="stats-grid" id="stats-grid"></div>
+                <button class="btn btn-primary" id="download-result-btn" style="width: auto; margin: 20px auto; display: block;">
+                    Скачать Excel отчет
+                </button>
+            </div>
+
+            <div class="history-section">
+                <h3 class="history-title">📜 История обработки</h3>
+                <div class="history-list" id="history-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let orderFiles = [];
+        let gutschriftFiles = [];
+        let currentResultFile = null;
+
+        // Инициализация drag & drop
+        function initDragDrop(zoneId, inputId, fileListId, isOrders) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            const listElement = document.getElementById(fileListId);
+            const fileArray = isOrders ? orderFiles : gutschriftFiles;
+
+            // Клик на зону
+            zone.addEventListener('click', () => input.click());
+
+            // Выбор файлов через input
+            input.addEventListener('change', (e) => {
+                handleFiles(e.target.files, fileArray, listElement, zone);
+            });
+
+            // Drag & Drop события
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files, fileArray, listElement, zone);
+            });
+        }
+
+        function handleFiles(files, fileArray, listElement, zone) {
+            // Очищаем массив и заполняем заново
+            fileArray.length = 0;
+            Array.from(files).forEach(file => {
+                if (file.type === 'application/pdf') {
+                    fileArray.push(file);
+                }
+            });
+
+            // Обновляем правильный массив
+            if (zone.id === 'orders-zone') {
+                orderFiles = fileArray;
+            } else {
+                gutschriftFiles = fileArray;
+            }
+
+            updateFileList(fileArray, listElement, zone);
+            updateProcessButton();
+        }
+
+        function updateFileList(fileArray, listElement, zone) {
+            listElement.innerHTML = '';
+            fileArray.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <span class="name">${file.name}</span>
+                    <span class="remove" onclick="removeFile('${zone.id}', ${index})">✕</span>
+                `;
+                listElement.appendChild(item);
+            });
+
+            if (fileArray.length > 0) {
+                zone.classList.add('has-files');
+            } else {
+                zone.classList.remove('has-files');
+            }
+        }
+
+        function removeFile(zoneId, index) {
+            if (zoneId === 'orders-zone') {
+                orderFiles.splice(index, 1);
+                updateFileList(orderFiles, document.getElementById('orders-list'), document.getElementById('orders-zone'));
+            } else {
+                gutschriftFiles.splice(index, 1);
+                updateFileList(gutschriftFiles, document.getElementById('gutschrifts-list'), document.getElementById('gutschrifts-zone'));
+            }
+            updateProcessButton();
+        }
+
+        function updateProcessButton() {
+            const btn = document.getElementById('process-btn');
+            btn.disabled = orderFiles.length === 0 && gutschriftFiles.length === 0;
+        }
+
+        function clearFiles() {
+            orderFiles = [];
+            gutschriftFiles = [];
+            document.getElementById('orders-list').innerHTML = '';
+            document.getElementById('gutschrifts-list').innerHTML = '';
+            document.getElementById('orders-zone').classList.remove('has-files');
+            document.getElementById('gutschrifts-zone').classList.remove('has-files');
+            updateProcessButton();
+        }
+
+        async function processFiles() {
+            const formData = new FormData();
+
+            orderFiles.forEach(file => {
+                formData.append('orders', file);
+            });
+
+            gutschriftFiles.forEach(file => {
+                formData.append('gutschrifts', file);
+            });
+
+            // Скрыть сообщения и результаты
+            document.getElementById('error-message').classList.remove('active');
+            document.getElementById('success-message').classList.remove('active');
+            document.getElementById('results-section').classList.remove('active');
+
+            // Показать прогресс
+            document.getElementById('progress-section').classList.add('active');
+            document.getElementById('process-btn').disabled = true;
+
+            // Запуск мониторинга статуса
+            const statusInterval = setInterval(updateStatus, 500);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(statusInterval);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showResults(result);
+                    currentResultFile = result.file;
+                    showSuccess('Обработка завершена успешно!');
+                    loadHistory();
+                } else {
+                    const error = await response.json();
+                    showError(error.error || 'Ошибка при обработке файлов');
+                }
+            } catch (error) {
+                clearInterval(statusInterval);
+                showError('Ошибка сети: ' + error.message);
+            } finally {
+                document.getElementById('progress-section').classList.remove('active');
+                document.getElementById('process-btn').disabled = false;
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch('/status');
+                const status = await response.json();
+
+                document.getElementById('progress-fill').style.width = status.progress + '%';
+                document.getElementById('progress-message').textContent = status.message;
+            } catch (error) {
+                console.error('Ошибка обновления статуса:', error);
+            }
+        }
+
+        function showResults(result) {
+            const resultsSection = document.getElementById('results-section');
+            const statsGrid = document.getElementById('stats-grid');
+
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${result.stats.orders_count}</div>
+                    <div class="stat-label">Заказов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.stats.gutschrifts_count}</div>
+                    <div class="stat-label">Гутшрифтов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.stats.matched_count}</div>
+                    <div class="stat-label">Сопоставлено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${result.stats.unmatched_count}</div>
+                    <div class="stat-label">Не сопоставлено</div>
+                </div>
+            `;
+
+            document.getElementById('download-result-btn').onclick = () => downloadFile(result.file);
+            resultsSection.classList.add('active');
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = '❌ ' + message;
+            errorElement.classList.add('active');
+            setTimeout(() => errorElement.classList.remove('active'), 5000);
+        }
+
+        function showSuccess(message) {
+            const successElement = document.getElementById('success-message');
+            successElement.textContent = '✅ ' + message;
+            successElement.classList.add('active');
+            setTimeout(() => successElement.classList.remove('active'), 5000);
+        }
+
+        function downloadFile(filename) {
+            window.open(`/download/${filename}`, '_blank');
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('/history');
+                const files = await response.json();
+
+                const historyList = document.getElementById('history-list');
+                historyList.innerHTML = '';
+
+                files.forEach(file => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div class="history-info">
+                            <div class="history-name">${file.name}</div>
+                            <div class="history-meta">${file.date} • ${file.size}</div>
+                        </div>
+                        <button class="download-btn" onclick="downloadFile('${file.name}')">Скачать</button>
+                    `;
+                    historyList.appendChild(item);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки истории:', error);
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            initDragDrop('orders-zone', 'orders-input', 'orders-list', true);
+            initDragDrop('gutschrifts-zone', 'gutschrifts-input', 'gutschrifts-list', false);
+            loadHistory();
+        });
+    </script>
+</body>
+</html>
