@@ -228,12 +228,19 @@ def get_history():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
+    import os
+
+    # Получаем порт из переменной окружения для Render
+    port = int(os.environ.get('PORT', 5001))
+
     print("=" * 60)
     print(" TRANSTAR-NAGEL WEB INTERFACE ".center(60))
     print("=" * 60)
-    print(f"✅ Сервер запущен на http://localhost:5001")
+    print(f"✅ Сервер запущен на порту {port}")
     print(f"📁 Результаты сохраняются в: {Path(parent_dir) / 'output'}")
     print("\nДля остановки нажмите Ctrl+C")
     print("=" * 60)
 
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    # В production не используем debug
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
